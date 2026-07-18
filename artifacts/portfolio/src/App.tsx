@@ -1,0 +1,61 @@
+import { useEffect } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from '@/components/ui/toaster';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import NotFound from '@/pages/not-found';
+import Home from '@/pages/Home';
+import { Route, Switch, Router as WouterRouter } from 'wouter';
+
+const queryClient = new QueryClient();
+
+function ScrollAnimationObserver() {
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('anim-in');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    const observe = () => {
+      document.querySelectorAll('.fade-up:not(.anim-in)').forEach((el) => observer.observe(el));
+    };
+
+    observe();
+    // Re-scan shortly after mount to catch dynamically rendered elements
+    const t = setTimeout(observe, 100);
+    return () => { clearTimeout(t); observer.disconnect(); };
+  }, []);
+
+  return null;
+}
+
+function Router() {
+  return (
+    <Switch>
+      <Route path="/" component={Home} />
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+          <ScrollAnimationObserver />
+          <Router />
+        </WouterRouter>
+        <Toaster />
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
+
+export default App;
