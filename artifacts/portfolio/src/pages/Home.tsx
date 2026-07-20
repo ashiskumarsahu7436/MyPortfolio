@@ -1,14 +1,17 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/sections/Hero";
 import { About } from "@/components/sections/About";
 import { Projects } from "@/components/sections/Projects";
+import { Certifications } from "@/components/sections/Certifications";
 import { Resume } from "@/components/sections/Resume";
 import { Contact } from "@/components/sections/Contact";
 import { AdminModal } from "@/components/AdminModal";
 
 export default function Home() {
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [, navigate] = useLocation();
 
   return (
     <div className="min-h-screen w-full bg-background flex flex-col relative font-sans text-foreground">
@@ -18,6 +21,7 @@ export default function Home() {
         <Hero />
         <About />
         <Projects />
+        <Certifications />
         <Resume />
         <Contact />
       </main>
@@ -41,10 +45,9 @@ export default function Home() {
       <AdminModal
         isOpen={isAdminModalOpen}
         onClose={() => setIsAdminModalOpen(false)}
-        onAuthenticated={(token) => {
-          console.info("Admin authenticated", token.slice(0, 10) + "…");
+        onAuthenticated={() => {
           setIsAdminModalOpen(false);
-          // TODO: navigate to /admin panel once built
+          navigate("/admin");
         }}
       />
     </div>

@@ -1,43 +1,41 @@
 -- ============================================================
 -- Portfolio CMS — Neon Database Schema
--- Run this once in your Neon project's SQL editor
--- (Neon dashboard → SQL Editor → paste and run)
+-- Run this once against your Neon project to set up all tables.
+-- Neon dashboard → SQL Editor → paste & run
 -- ============================================================
 
--- Admin credentials table (single-row: only one admin account)
+-- Admin credentials (single-row enforced by unique index)
 CREATE TABLE IF NOT EXISTS admin_credentials (
-  id           SERIAL PRIMARY KEY,
-  user_id      TEXT        NOT NULL,
-  password_hash TEXT       NOT NULL,
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id            SERIAL PRIMARY KEY,
+  user_id       TEXT        NOT NULL,
+  password_hash TEXT        NOT NULL,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Enforce exactly one admin row at the database level
 CREATE UNIQUE INDEX IF NOT EXISTS admin_credentials_one_row
   ON admin_credentials ((true));
 
--- ============================================================
--- CMS content tables (add to these as the admin panel grows)
--- ============================================================
-
--- Site-wide profile settings (one row)
+-- ── Site profile (one row) ──────────────────────────────────
 CREATE TABLE IF NOT EXISTS profile (
-  id          SERIAL PRIMARY KEY,
-  full_name   TEXT        NOT NULL DEFAULT '',
-  tagline     TEXT        NOT NULL DEFAULT '',
-  bio         TEXT        NOT NULL DEFAULT '',
-  email       TEXT        NOT NULL DEFAULT '',
-  github_url  TEXT        NOT NULL DEFAULT '',
-  linkedin_url TEXT       NOT NULL DEFAULT '',
-  photo_url   TEXT        NOT NULL DEFAULT '',
-  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id           SERIAL PRIMARY KEY,
+  full_name    TEXT        NOT NULL DEFAULT '',
+  tagline      TEXT        NOT NULL DEFAULT '',
+  bio          TEXT        NOT NULL DEFAULT '',
+  email        TEXT        NOT NULL DEFAULT '',
+  github_url   TEXT        NOT NULL DEFAULT '',
+  linkedin_url TEXT        NOT NULL DEFAULT '',
+  photo_url    TEXT        NOT NULL DEFAULT '',
+  focus        TEXT        NOT NULL DEFAULT '',
+  philosophy   TEXT        NOT NULL DEFAULT '',
+  tech_stack   TEXT[]      NOT NULL DEFAULT '{}',
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 INSERT INTO profile DEFAULT VALUES
   ON CONFLICT DO NOTHING;
 
--- Projects
+-- ── Projects ────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS projects (
   id          SERIAL PRIMARY KEY,
   title       TEXT        NOT NULL,
@@ -48,11 +46,13 @@ CREATE TABLE IF NOT EXISTS projects (
   thumbnail   TEXT        NOT NULL DEFAULT '',
   sort_order  INT         NOT NULL DEFAULT 0,
   published   BOOLEAN     NOT NULL DEFAULT true,
+  status      TEXT        NOT NULL DEFAULT 'In Progress',
+  label       TEXT        NOT NULL DEFAULT '',
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Resume metadata
+-- ── Resume metadata ─────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS resume (
   id           SERIAL PRIMARY KEY,
   file_url     TEXT        NOT NULL DEFAULT '',
@@ -62,3 +62,23 @@ CREATE TABLE IF NOT EXISTS resume (
 
 INSERT INTO resume DEFAULT VALUES
   ON CONFLICT DO NOTHING;
+
+-- ── Certifications & Licenses ───────────────────────────────
+CREATE TABLE IF NOT EXISTS certifications (
+  id             SERIAL PRIMARY KEY,
+  title          TEXT        NOT NULL DEFAULT '',
+  issuer         TEXT        NOT NULL DEFAULT '',
+  issue_date     DATE,
+  expiry_date    DATE,
+  credential_url TEXT        NOT NULL DEFAULT '',
+  badge_url      TEXT        NOT NULL DEFAULT '',
+  sort_order     INT         NOT NULL DEFAULT 0,
+  published      BOOLEAN     NOT NULL DEFAULT true,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================================
+-- After running this script, create your admin account:
+--   POST /api/auth/setup  { "userId": "yourname", "password": "yourpassword" }
+-- ============================================================
