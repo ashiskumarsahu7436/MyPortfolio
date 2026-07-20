@@ -1,12 +1,11 @@
 import { useEffect } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import Home from '@/pages/Home';
+import Admin from '@/pages/Admin';
+import AdminLogin from '@/pages/AdminLogin';
 import { Route, Switch, Router as WouterRouter } from 'wouter';
-
-const queryClient = new QueryClient();
 
 function ScrollAnimationObserver() {
   useEffect(() => {
@@ -27,7 +26,6 @@ function ScrollAnimationObserver() {
     };
 
     observe();
-    // Re-scan shortly after mount to catch dynamically rendered elements
     const t = setTimeout(observe, 100);
     return () => { clearTimeout(t); observer.disconnect(); };
   }, []);
@@ -39,6 +37,8 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -46,15 +46,13 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-          <ScrollAnimationObserver />
-          <Router />
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <TooltipProvider>
+      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+        <ScrollAnimationObserver />
+        <Router />
+      </WouterRouter>
+      <Toaster />
+    </TooltipProvider>
   );
 }
 

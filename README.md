@@ -1,45 +1,83 @@
-# [Project name]
+# Ashis Kumar Sahu — Personal Portfolio CMS
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
-
-## Run & Operate
-
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+A self-hosted portfolio with a built-in CMS admin panel. All content (profile, projects, certifications, resume) is stored in a Neon PostgreSQL database and managed through a password-protected admin dashboard — no external CMS required.
 
 ## Stack
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+| Layer | Tech |
+|---|---|
+| Monorepo | pnpm workspaces |
+| Frontend | React 19 + Vite + Tailwind CSS 4 + wouter |
+| Backend | Express 5 + Node.js |
+| Database | Neon (serverless Postgres) via `@neondatabase/serverless` |
+| Auth | bcrypt passwords + JWT (24 h tokens) |
+| ORM | Drizzle (schema definition only; queries use raw SQL) |
 
-## Where things live
+## Project structure
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+```
+artifacts/
+  portfolio/        # React + Vite frontend (portfolio site + admin panel)
+  api-server/       # Express API server (all /api/* routes)
+lib/
+  db/               # Drizzle schema definitions
+scripts/            # Workspace utility scripts
+```
 
-## Architecture decisions
+## Running locally
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+```bash
+# Install dependencies
+pnpm install
 
-## Product
+# Start both services (each in its own terminal)
+pnpm --filter @workspace/api-server run dev   # API on :8080
+pnpm --filter @workspace/portfolio run dev    # Vite on :5173
+```
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Required environment variables (set in `.env` or Replit Secrets):
 
-## User preferences
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | Neon connection string (pooled) |
+| `SESSION_SECRET` | Random string used to sign JWTs |
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+## Database setup
 
-## Gotchas
+Run `artifacts/portfolio/schema.sql` once in your Neon SQL editor to create all tables. Then create your admin account:
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+```bash
+curl -X POST https://<your-domain>/api/auth/setup \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"yourname","password":"yourpassword"}'
+```
 
-## Pointers
+## Admin panel
 
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+Navigate to `/admin/login` on your deployed site. Log in with the credentials you created above. The dashboard lets you edit:
+
+- **Profile** — name, tagline, bio, photo, social links, focus, philosophy, tech stack
+- **Projects** — add/edit/delete/reorder, toggle published, link to GitHub & live demo
+- **Certifications** — add credentials with badge image, issue/expiry dates, verify URL
+- **Resume** — PDF download link and last-updated date
+- **Security** — change your admin credentials
+
+## API routes
+
+All routes are under `/api`:
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/healthz` | — | Health check |
+| `POST` | `/auth/setup` | — | Create admin account (one-time) |
+| `POST` | `/auth/login` | — | Login, returns JWT |
+| `GET/PATCH` | `/profile` | PATCH: JWT | Site profile |
+| `GET` | `/projects` | — | Published projects (all if JWT) |
+| `POST/PATCH/DELETE` | `/projects/*` | JWT | Manage projects |
+| `GET/PATCH` | `/resume` | PATCH: JWT | Resume metadata |
+| `GET` | `/certifications` | — | Published certs (all if JWT) |
+| `POST/PATCH/DELETE` | `/certifications/*` | JWT | Manage certifications |
+
+## Deployment
+
+The frontend (`artifacts/portfolio`) builds to a static Vite bundle. The API server (`artifacts/api-server`) is a standard Node.js/Express process. Deploy both — frontend can be on Vercel/Netlify/Replit, API on any Node host — and point `VITE_API_BASE` at the API origin if they differ.
