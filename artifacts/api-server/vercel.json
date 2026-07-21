@@ -1,0 +1,10 @@
+{
+  "installCommand": "echo 'install handled by buildCommand'",
+  "buildCommand": "cd ../.. && pnpm install --frozen-lockfile",
+  "builds": [
+    { "src": "api/index.ts", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "api/index.ts" }
+  ]
+}
