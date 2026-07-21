@@ -8,13 +8,15 @@ import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
 const port = Number(process.env.PORT ?? 5173);
 
 const basePath = process.env.BASE_PATH ?? "/";
+const isDev = process.env.NODE_ENV !== 'production';
 
 export default defineConfig({
   base: basePath,
   plugins: [
     react(),
     tailwindcss(),
-    runtimeErrorOverlay(),
+    // Dev-only: Replit runtime error overlay (adds client-side code; excluded from production builds)
+    ...(isDev ? [runtimeErrorOverlay()] : []),
     ...(process.env.NODE_ENV !== 'production' &&
     process.env.REPL_ID !== undefined
       ? [
@@ -53,6 +55,14 @@ export default defineConfig({
     allowedHosts: true,
     fs: {
       strict: true,
+    },
+    // Dev-only proxy: forwards /api requests to the Express API server.
+    // This block is ignored by `vite build` and has no effect on Vercel deployment.
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
     },
   },
   preview: {

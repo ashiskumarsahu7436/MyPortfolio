@@ -4,7 +4,9 @@
  * Import `adminApi` for authenticated CRUD (admin panel).
  */
 
-const BASE = "/api";
+// In dev (Replit), VITE_API_BASE is unset and the Vite proxy forwards /api → Express.
+// In production (Vercel), set VITE_API_BASE to your API server's origin, e.g. https://your-api.vercel.app
+const BASE = (import.meta.env.VITE_API_BASE ?? "") + "/api";
 
 async function req<T>(
   method: string,
